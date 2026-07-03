@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#1a1a2e">
+  <title>PDV Pro v2</title>
+  
+  <!-- Fontes e Ícones -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght=400;700&family=DM+Sans:wght=400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Estilo customizado -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <header>
+    <div class="brand"><i class="fa-solid fa-cash-register"></i> PDV<span>PRO</span></div>
+    <nav>
+      <button class="nav-btn active" onclick="switchPage('pos')"><i class="fa-solid fa-cart-shopping"></i> Caixa</button>
+      <button class="nav-btn" onclick="switchPage('products')"><i class="fa-solid fa-box"></i> Produtos</button>
+      <button class="nav-btn" onclick="switchPage('sales')"><i class="fa-solid fa-receipt"></i> Vendas</button>
+      <button class="nav-btn" onclick="switchPage('settings')"><i class="fa-solid fa-gear"></i> Ajustes</button>
+    </nav>
+    <div class="header-actions">
+      <div class="status-indicator">SISTEMA ONLINE</div>
+      <button class="theme-toggle" onclick="toggleTheme()" title="Alternar Tema"><i class="fa-solid fa-moon"></i></button>
+    </div>
+  </header>
+
+  <main>
+    <!-- PAGINA: POS (CAIXA) -->
+    <div id="page-pos" class="page active">
+      <div class="pos-left">
+        <div class="input-container">
+          <span class="input-label">Código de Barras / PLU / SKU (F3)</span>
+          <div class="input-row">
+            <input type="text" id="pluInput" class="plu-input" placeholder="0000000000000" autocomplete="off">
+          </div>
+        </div>
+        
+        <div class="cart-container">
+          <div class="cart-header">
+            <div>ITEM</div><div>DESCRIÇÃO</div><div style="text-align:right">QTD</div><div style="text-align:right">UNIT</div><div style="text-align:right">TOTAL</div>
+          </div>
+          <div id="cartItems" class="cart-items"></div>
+        </div>
+        
+        <div class="shortcuts-bar">
+          <div class="shortcut-item"><kbd>F2</kbd> Inserir Manual</div>
+          <div class="shortcut-item"><kbd>F4</kbd> Pagar</div>
+          <div class="shortcut-item"><kbd>+</kbd> / <kbd>-</kbd> Mudar Qtd</div>
+          <div class="shortcut-item"><kbd>Delete</kbd> Remover Item</div>
+          <div class="shortcut-item"><kbd>Esc</kbd> Fechar Telas</div>
+        </div>
+      </div>
+      
+      <div class="pos-right">
+        <div class="bill-header">
+          <div class="bill-title">Cupom Fiscal Eletrônico</div>
+          <div class="bill-meta">
+            <span id="billNumber">CONTA #0000</span>
+            <span id="billDate">00/00/0000 00:00</span>
+          </div>
+        </div>
+        
+        <div class="totals-box">
+          <div class="total-row sub"><span>Subtotal</span><span id=\"subtotalVal\" class="val">R$ 0,00</span></div>
+          <div class="total-row sub"><span>Descontos</span><span id="discountVal" class="val" style="color:var(--danger)">R$ 0,00</span></div>
+          <div class="total-row main-total"><span>TOTAL</span><span id="totalVal" class="val">R$ 0,00</span></div>
+        </div>
+        
+        <div class="action-pad">
+          <button class="pad-btn" onclick="openManualEntryModal()"><i class="fa-solid fa-keyboard"></i> Entrada Manual <kbd>F2</kbd></button>
+          <button class="pad-btn" onclick="changeQtyShortcut()"><i class="fa-solid fa-calculator"></i> Alterar Qtd <kbd>+/-</kbd></button>
+          <button class="pad-btn" onclick="removeSelectedCartItem()"><i class="fa-solid fa-trash-can"></i> Excluir Item <kbd>Del</kbd></button>
+          <button class="pad-btn" onclick="clearCart()"><i class="fa-solid fa-arrow-rotate-left"></i> Cancelar Venda</button>
+          <button class="pad-btn action-primary" onclick="openPaymentModal()"><i class="fa-solid fa-money-bill-wave"></i> FINALIZAR VENDA <kbd>F4</kbd></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGINA: PRODUTOS -->
+    <div id="page-products" class="page">
+      <div class="panel panel-left">
+        <div class="panel-header"><div class="panel-title" id="prodFormTitle">Cadastrar Novo Produto</div></div>
+        <div class="panel-body">
+          <input type="hidden" id="prodId">
+          <div class="form-group">
+            <label>Código de Barras / SKU *</label>
+            <input type="text" id="prodCode" class="form-control" placeholder="Ex: 7891234567890">
+          </div>
+          <div class="form-group">
+            <label>Nome / Descrição do Produto *</label>
+            <input type="text" id="prodName" class="form-control" placeholder="Ex: Refrigerante Lata 350ml">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Preço de Venda (R$) *</label>
+              <input type="number" id="prodPrice" class="form-control" placeholder="0.00" step="0.01">
+            </div>
+            <div class="form-group">
+              <label>Estoque Atual</label>
+              <input type="number" id="prodStock" class="form-control" placeholder="0" step="1">
+            </div>
+          </div>
+          <div style="margin-top:10px;display:flex;gap:10px">
+            <button class="btn btn-primary" style="flex:1" onclick="saveProduct()">Salvar Produto</button>
+            <button class="btn" id="btnCancelEdit" style="display:none" onclick="resetProductForm()">Cancelar</button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="panel panel-right">
+        <div class="panel-header">
+          <div class="panel-title">Produtos Cadastrados</div>
+          <div style="font-size:.85rem;color:var(--text-secondary)" id="prodCount">0 cadastrados</div>
+        </div>
+        <div class="panel-body">
+          <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="searchProd" class="form-control" placeholder="Pesquisar por código ou descrição..." oninput="renderProducts()">
+          </div>
+          <div class="table-wrapper">
+            <table class="data-table" id="productsTable">
+              <thead>
+                <tr><th>Código</th><th>Descrição</th><th style="text-align:right">Preço</th><th style="text-align:right">Estoque</th><th style="text-align:right">Ações</th></tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGINA: HISTORICO VENDAS -->
+    <div id="page-sales" class="page" style="flex-direction:column">
+      <div class="sales-summary">
+        <div class="summary-card">
+          <div class="summary-icon blue"><i class="fa-solid fa-chart-line"></i></div>
+          <div class="summary-info"><span class="summary-label">Faturamento Total</span><span id="sumRevenue" class="summary-value">R$ 0,00</span></div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-icon green"><i class="fa-solid fa-basket-shopping"></i></div>
+          <div class="summary-info"><span class="summary-label">Vendas Concluídas</span><span id="sumCount" class="summary-value">0</span></div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-icon orange"><i class="fa-solid fa-box-open"></i></div>
+          <div class="summary-info"><span class="summary-label">Itens Vendidos</span><span id="sumItems" class="summary-value">0</span></div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-icon purple"><i class="fa-solid fa-calculator"></i></div>
+          <div class="summary-info"><span class="summary-label">Ticket Médio</span><span id="sumAverage" class="summary-value">R$ 0,00</span></div>
+        </div>
+      </div>
+
+      <div class="panel" style="flex:1">
+        <div class="panel-header"><div class="panel-title">Registros de Vendas Coletadas</div></div>
+        <div class="panel-body">
+          <div class="table-wrapper">
+            <table class="data-table" id="salesTable">
+              <thead>
+                <tr><th>ID Venda</th><th>Data/Hora</th><th style="text-align:right">Itens</th><th style="text-align:right">Total</th><th>Forma Pagto</th><th style="text-align:right">Ações</th></tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGINA: CONFIGURACOES -->
+    <div id="page-settings" class="page">
+      <div class="config-grid">
+        <div class="config-card">
+          <div class="config-card-title"><i class="fa-solid fa-database"></i> Banco de Dados Local</div>
+          <p style="font-size:.9rem;color:var(--text-secondary);line-height:1.4">O sistema guarda todas as informações localmente no navegador (LocalStorage). Use as opções abaixo para gerir os dados.</p>
+          <div style="font-size:.85rem;font-weight:700">Armazenamento em uso: <span id="storageUsed" style="color:var(--accent);font-family:var(--font-mono)">0 KB</span></div>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:5px">
+            <button class="btn" onclick="exportBackup()"><i class="fa-solid fa-file-export"></i> Exportar Backup JSON</button>
+            <button class="btn" onclick="triggerBackupImport()"><i class="fa-solid fa-file-import"></i> Importar Backup JSON</button>
+            <input type="file" id="importFile" style="display:none" accept=".json" onchange="importBackup(event)">
+            <button class="btn btn-danger" onclick="clearAllData()"><i class="fa-solid fa-triangle-exclamation"></i> Apagar Toda a Base</button>
+          </div>
+        </div>
+        
+        <div class="config-card">
+          <div class="config-card-title"><i class="fa-solid fa-seedling"></i> Inicialização Rápida</div>
+          <p style="font-size:.9rem;color:var(--text-secondary);line-height:1.4">Adicione dados de teste automaticamente para experimentar e testar as funcionalidades do ponto de venda imediatamente.</p>
+          <button class="btn btn-primary" style="margin-top:auto" onclick="loadDemoData()"><i class="fa-solid fa-wand-magic-sparkles"></i> Inserir Produtos de Teste</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- MODAL: ENTRADA MANUAL (F2) -->
+  <div id="modalManual" class="modal-overlay">
+    <div class="modal-container">
+      <div class="modal-header"><div class="panel-title">Entrada de Item Manual</div><button class="btn-icon" onclick="closeModal('modalManual')"><i class="fa-solid fa-xmark"></i></button></div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Localizar Produto</label>
+          <select id="manualSelect" class="form-control"></select>
+        </div>
+        <div class="form-group">
+          <label>Quantidade</label>
+          <input type="number" id="manualQty" class="form-control" value="1" min="1" step="1">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeModal('modalManual')">Voltar</button>
+        <button class="btn btn-primary" onclick="submitManualEntry()">Adicionar no Caixa</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: PAGAMENTO (F4) -->
+  <div id="modalPayment" class="modal-overlay">
+    <div class="modal-container" style="max-width:600px">
+      <div class="modal-header"><div class="panel-title">Fechamento e Liquidação da Venda</div><button class="btn-icon" onclick="closeModal('modalPayment')"><i class="fa-solid fa-xmark"></i></button></div>
+      <div class="modal-body pay-grid">
+        <div class="pay-methods">
+          <label class="input-label">Método de Recebimento</label>
+          <div class="pay-method-btn selected" id="pay-money" onclick="setPayMethod('Dinheiro')"><i class="fa-solid fa-money-bill-wave"></i> Dinheiro</div>
+          <div class="pay-method-btn" id="pay-card-deb" onclick="setPayMethod('Cartão Débito')"><i class="fa-solid fa-credit-card"></i> Cartão Débito</div>
+          <div class="pay-method-btn" id="pay-card-cred" onclick="setPayMethod('Cartão Crédito')"><i class="fa-solid fa-credit-card"></i> Cartão Crédito</div>
+          <div class="pay-method-btn" id="pay-pix" onclick="setPayMethod('PIX')"><i class="fa-solid fa-qrcode"></i> PIX / Instantâneo</div>
+        </div>
+        <div class="pay-calc">
+          <div class="pay-display"><span class="label">Total a Pagar</span><span id="payTotal" class="val" style="color:var(--accent)">R$ 0,00</span></div>
+          <div class="form-group" id="receivedGroup">
+            <label>Valor Entregue pelo Cliente (R$)</label>
+            <input type="number" id="payReceived" class="form-control" style="font-family:var(--font-mono);font-size:1.4rem;font-weight:700" placeholder="0.00" step="0.01" oninput="calcChange()">
+          </div>
+          <div class="pay-display" id="changeDisplay"><span class="label">Troco Devido</span><span id="payChange" class="val change">R$ 0,00</span></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeModal('modalPayment')">Voltar</button>
+        <button class="btn btn-primary" style="background:var(--success)" onclick="completeSale()"><i class="fa-solid fa-check"></i> Confirmar e Imprimir</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Script customizado -->
+  <script src="js/app.js"></script>
+</body>
+</html>
